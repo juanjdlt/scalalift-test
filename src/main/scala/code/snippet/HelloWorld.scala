@@ -20,3 +20,4 @@ class HelloWorld {
    def howdy = "#time *" #> date.toString
    */
 }
+

@@ -15,7 +15,7 @@ import java.util.Date
  * stack basis.
  */
 object DependencyFactory extends Factory {
-  implicit object time extends FactoryMaker(net.liftweb.util.Helpers.now _)
+  implicit object time extends FactoryMaker(Helpers.now _)
 
   /**
    * objects in Scala are lazily created.  The init()
