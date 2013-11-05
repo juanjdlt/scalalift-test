@@ -55,6 +55,15 @@ class Boot {
     LiftRules.jsArtifacts = JQueryArtifacts
     JQueryModule.InitParam.JQuery=JQueryModule.JQuery172
     JQueryModule.init()
+    
+    /*def matcher: LiftRules.DispatchPF = {
+    	case req @ Req("twitter" :: "authenticate" :: Nil, _, GetRequest) =>
+    		() => signUpRedirect(req)
+    	case req @ Req("twitter" :: "callback" :: Nil, _, GetRequest) =>
+    		() => processCallBack(req)
+    	case req @ Req("twitter" :: "logout" :: Nil, _, GetRequest) =>
+    		() => logout(req)
+    } */
 
   }
 }
