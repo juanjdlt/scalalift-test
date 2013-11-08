@@ -9,16 +9,13 @@ import code.lib._
 import Helpers._
 import net.liftweb.http.js._
 import net.liftweb.http.SHtml
-import code.model.TwitterAPI
+import net.liftweb.http.S
 
 object Login extends Loggable {
 
   def callback() : JsCmd = {
-    val twitter = new TwitterAPI
     logger.info("The button was pressed")
-    JsCmds.Alert("You clicked it:")
-    
-    //twitter setStatus "jeje"
+    S.redirectTo("twitter/authenticate")
   }
 
   def button = "img [onclick]" #> SHtml.ajaxInvoke(callback)

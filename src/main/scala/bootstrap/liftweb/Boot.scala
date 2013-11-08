@@ -10,6 +10,7 @@ import sitemap._
 import Loc._
 import net.liftmodules.JQueryModule
 import net.liftweb.http.js.jquery._
+import code.model.TwitterAPI
 
 
 /**
@@ -31,6 +32,8 @@ class Boot {
       // /static path to be visible
       Menu(Loc("Static", Link(List("static"), true, "/static/index"), 
 	       "Static Content")))
+	       
+	  //@TODO:Set a menu only for logged in users -access control--
 
     // set the sitemap.  Note if you don't want access control for
     // each page, just comment this line out.
@@ -56,14 +59,16 @@ class Boot {
     JQueryModule.InitParam.JQuery=JQueryModule.JQuery172
     JQueryModule.init()
     
-    /*def matcher: LiftRules.DispatchPF = {
-    	case req @ Req("twitter" :: "authenticate" :: Nil, _, GetRequest) =>
-    		() => signUpRedirect(req)
-    	case req @ Req("twitter" :: "callback" :: Nil, _, GetRequest) =>
-    		() => processCallBack(req)
-    	case req @ Req("twitter" :: "logout" :: Nil, _, GetRequest) =>
-    		() => logout(req)
-    } */
-
+    //Dispatchers
+    	def twitterRoutes: LiftRules.DispatchPF = {
+    		case req @ Req("twitter" :: "authenticate" :: Nil, _, GetRequest) =>
+    			() => TwitterAPI.doAuth(req)
+    		case req @ Req("twitter" :: "callback" :: Nil, _, GetRequest) =>
+    			() => TwitterAPI.processAuthCallback(req)
+    		/*case req @ Req("twitter" :: "logout" :: Nil, _, GetRequest) =>
+    			() => logout(req) */
+    	} 
+    
+    LiftRules.dispatch.append(twitterRoutes)
   }
 }
