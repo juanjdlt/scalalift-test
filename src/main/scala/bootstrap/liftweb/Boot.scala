@@ -3,7 +3,6 @@ package bootstrap.liftweb
 import net.liftweb._
 import util._
 import Helpers._
-
 import common._
 import http._
 import sitemap._
@@ -11,7 +10,8 @@ import Loc._
 import net.liftmodules.JQueryModule
 import net.liftweb.http.js.jquery._
 import code.model.TwitterAPI
-
+import net.liftweb.http.SessionVar
+import code.model.sessionTwitter
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -21,19 +21,29 @@ class Boot {
   def boot {
     // where to search snippet
     LiftRules.addToPackages("code")
+    
+    def isLoggedIn_? : Boolean =
+	   		if(sessionTwitter.isDefined) true else false
 
     // Build SiteMap
     val entries = List(
       Menu.i("Home") / "index", // the simple way to declare a menu
+            
+      Menu.i("Login") / "login" >> If(() => isLoggedIn_? == false, ""),
       
-      Menu.i("Login") / "login",
-
+      //@todo: maybe group the before access control handlers..
+      Menu.i("Post a Tweet") / "post_tweet" >> If(isLoggedIn_? _,
+                                            S ? "Log in first"),
+                                            
+       Menu.i("Logout") / "logout" >> If(isLoggedIn_? _,
+                                            S ? "Log in first"),
+      
       // more complex because this menu allows anything in the
       // /static path to be visible
       Menu(Loc("Static", Link(List("static"), true, "/static/index"), 
 	       "Static Content")))
-	       
-	  //@TODO:Set a menu only for logged in users -access control--
+	      
+     
 
     // set the sitemap.  Note if you don't want access control for
     // each page, just comment this line out.
@@ -59,14 +69,14 @@ class Boot {
     JQueryModule.InitParam.JQuery=JQueryModule.JQuery172
     JQueryModule.init()
     
-    //Dispatchers
+    //Dispatchers for Twitter Login Actions
     	def twitterRoutes: LiftRules.DispatchPF = {
     		case req @ Req("twitter" :: "authenticate" :: Nil, _, GetRequest) =>
     			() => TwitterAPI.doAuth(req)
     		case req @ Req("twitter" :: "callback" :: Nil, _, GetRequest) =>
     			() => TwitterAPI.processAuthCallback(req)
-    		/*case req @ Req("twitter" :: "logout" :: Nil, _, GetRequest) =>
-    			() => logout(req) */
+    		case req @ Req("logout" :: Nil, _, GetRequest) =>
+    			() => TwitterAPI.doLogout(req)
     	} 
     
     LiftRules.dispatch.append(twitterRoutes)

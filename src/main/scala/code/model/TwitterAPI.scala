@@ -29,7 +29,20 @@ object TwitterAPI  extends Loggable  {
 				Props.get("twitter.oauth.consumerSecret").openOr(""))
 	}
 
-	def setStatus(status: String) = this.twitter.updateStatus(status)
+	def setStatus(status: String) = {
+		(sessionTwitter.is) match {
+			case (Full(twitter)) => {  //Fix this
+				try {
+					twitter.updateStatus(status)
+
+				} catch {
+					case e: TwitterException => {
+						throw new Exception(e)
+					}
+				}
+			}	  
+		}
+	}
 
 	def doAuth(req: Req): Box[LiftResponse] = {
 	  
@@ -37,7 +50,7 @@ object TwitterAPI  extends Loggable  {
 		sessionTwitter.set(Full(this.twitter))
 		try {
 			val callbackURL = req.hostAndPath + "/twitter/callback"
-			val requestToken = twitter.getOAuthRequestToken(callbackURL)
+			val requestToken = this.twitter.getOAuthRequestToken(callbackURL)
 			sessionRequestToken.set(Full(requestToken))
 			S.redirectTo(requestToken.getAuthenticationURL)
 		} catch {
@@ -46,7 +59,7 @@ object TwitterAPI  extends Loggable  {
 					te.printStackTrace
 					logger.info("Unable to get the access token.")
 				} else {
-				te.printStackTrace
+					te.printStackTrace
 				}
 				S.error("Unable to login with twitter.")
 				S.redirectTo("/")
@@ -55,14 +68,36 @@ object TwitterAPI  extends Loggable  {
 	}
 	
 	def processAuthCallback(req: Req): Box[LiftResponse] = {
-	  logger.info("almost logged..")
-	  S.error("almost logged")
-	  S.redirectTo("/")
+		(sessionTwitter.is, sessionRequestToken.is, req.param("oauth_verifier")) match {
+			case (Full(twitter), Full(requestToken), Full(verifier)) => {
+				try {
+					twitter.getOAuthAccessToken(requestToken, verifier)
+					sessionRequestToken.remove
+					val tuser = this.twitter.verifyCredentials
+					/*val userName = tuser.getScreenName
+					val imageUrl = tuser.getProfileImageURL.toString*/
+					logger.info("Getting the twitter user as " + tuser)
+					S.redirectTo("/post_tweet")
+				} catch {
+					case e: TwitterException => {
+						throw new Exception(e)
+					}
+				}	
+			}
+			case _ => {
+				S.error("Authentication error")
+				logger.info("Authentication error")
+				S.redirectTo("/")
+			}
+		}
+	}
+	
+	def doLogout(req: Req): Box[LiftResponse] = { 
+		sessionTwitter.remove
+		sessionRequestToken.remove
+		S.redirectTo("/")
 	}
 }
-
-
-    
 
 object sessionTwitter extends SessionVar[Box[Twitter]](Empty)
 object sessionRequestToken extends SessionVar[Box[RequestToken]](Empty)
