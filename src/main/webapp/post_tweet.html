@@ -1,0 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+  	<meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+  	<title>Post a Tweet</title>
+  </head>
+  
+  <body class="lift:content_id=main">
+	<div id="main" class="lift:surround?with=default;at=content">
+    	<h2 data-lift="TweetForm.twitterUsername">Hey @<span id="username">twitter username goes here</span>, you have succesfully logged in!</h2>
+    	<img data-lift="TweetForm.twitterPorfilePic" src=""/>
+      	<form data-lift="form.ajax">
+  			<div data-lift="TweetFormProcess">
+    			<input type="text" name="tweet" placeholder="write something ..">
+    			<input type="submit">
+  			</div>
+		</form>
+		<div id="result"></div>
+	</div>
+  </body>
+</html>

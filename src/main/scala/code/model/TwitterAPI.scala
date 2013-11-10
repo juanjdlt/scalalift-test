@@ -30,18 +30,10 @@ object TwitterAPI  extends Loggable  {
 	}
 
 	def setStatus(status: String) = {
-		(sessionTwitter.is) match {
-			case (Full(twitter)) => {  //Fix this
-				try {
-					twitter.updateStatus(status)
-
-				} catch {
-					case e: TwitterException => {
-						throw new Exception(e)
-					}
-				}
-			}	  
-		}
+	  if(sessionTwitter.isDefined)
+	    this.twitter.updateStatus(status)
+	  else
+		S.error("Unable to post a tweet.")
 	}
 
 	def doAuth(req: Req): Box[LiftResponse] = {
@@ -73,9 +65,7 @@ object TwitterAPI  extends Loggable  {
 				try {
 					twitter.getOAuthAccessToken(requestToken, verifier)
 					sessionRequestToken.remove
-					val tuser = this.twitter.verifyCredentials
-					/*val userName = tuser.getScreenName
-					val imageUrl = tuser.getProfileImageURL.toString*/
+					val tuser = twitter.verifyCredentials
 					logger.info("Getting the twitter user as " + tuser)
 					S.redirectTo("/post_tweet")
 				} catch {
