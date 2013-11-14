@@ -22,8 +22,8 @@ import net.liftweb.http.GetRequest
 
 object TwitterAPI  extends Loggable  {
 
-	val twitter = (new TwitterFactory()).getInstance()
-
+	var twitter = (new TwitterFactory()).getInstance() 
+	
 	def setOauth() = {
 		this.twitter.setOAuthConsumer(Props.get("twitter.oauth.consumerKey").openOr(""),
 				Props.get("twitter.oauth.consumerSecret").openOr(""))
@@ -37,7 +37,6 @@ object TwitterAPI  extends Loggable  {
 	}
 
 	def doAuth(req: Req): Box[LiftResponse] = {
-	  
 		this.setOauth
 		sessionTwitter.set(Full(this.twitter))
 		try {
@@ -54,6 +53,7 @@ object TwitterAPI  extends Loggable  {
 					te.printStackTrace
 				}
 				S.error("Unable to login with twitter.")
+				this.nullifySingleton
 				S.redirectTo("/")
 			}
 		}
@@ -70,6 +70,7 @@ object TwitterAPI  extends Loggable  {
 					S.redirectTo("/post_tweet")
 				} catch {
 					case e: TwitterException => {
+					  	this.nullifySingleton
 						throw new Exception(e)
 					}
 				}	
@@ -77,15 +78,21 @@ object TwitterAPI  extends Loggable  {
 			case _ => {
 				S.error("Authentication error")
 				logger.info("Authentication error")
+				this.nullifySingleton
 				S.redirectTo("/")
 			}
 		}
 	}
 	
-	def doLogout(req: Req): Box[LiftResponse] = { 
-		sessionTwitter.remove
-		sessionRequestToken.remove
+	def doLogout(req: Req): Box[LiftResponse] = {  
+		this.nullifySingleton
 		S.redirectTo("/")
+	}
+	
+	def nullifySingleton = {
+	  	sessionTwitter.remove
+		sessionRequestToken.remove
+		this.twitter = (new TwitterFactory()).getInstance()
 	}
 }
 
