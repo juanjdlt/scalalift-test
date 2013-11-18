@@ -21,27 +21,34 @@ import net.liftweb.http.GetRequest
 
 
 object TwitterAPI  extends Loggable  {
-
-	var twitter = (new TwitterFactory()).getInstance() 
 	
-	def setOauth() = {
-		this.twitter.setOAuthConsumer(Props.get("twitter.oauth.consumerKey").openOr(""),
-				Props.get("twitter.oauth.consumerSecret").openOr(""))
-	}
+   //Dispatchers for Twitter Login Actions
+   def twitterRoutes: LiftRules.DispatchPF = {
+    	case req @ Req("twitter" :: "authenticate" :: Nil, _, GetRequest) => 
+    	  () => this.doAuth(req)
+    	case req @ Req("twitter" :: "callback" :: Nil, _, GetRequest) =>
+    		() => this.processAuthCallback(req)
+    	case req @ Req("logout" :: Nil, _, GetRequest) =>
+    		() => this.doLogout(req)
+    }
 
 	def setStatus(status: String) = {
 	  if(sessionTwitter.isDefined)
-	    this.twitter.updateStatus(status)
+	     sessionTwitter.is.get.updateStatus(status)
 	  else
 		S.error("Unable to post a tweet.")
-	}
+	} 
 
 	def doAuth(req: Req): Box[LiftResponse] = {
-		this.setOauth
-		sessionTwitter.set(Full(this.twitter))
+	   val twitterInstance = (new TwitterFactory).getInstance
+	   
+	   twitterInstance.setOAuthConsumer(Props.get("twitter.oauth.consumerKey").openOr(""),
+				Props.get("twitter.oauth.consumerSecret").openOr(""))
+				
+		sessionTwitter.set(Full(twitterInstance))
 		try {
 			val callbackURL = req.hostAndPath + "/twitter/callback"
-			val requestToken = this.twitter.getOAuthRequestToken(callbackURL)
+			val requestToken = twitterInstance.getOAuthRequestToken(callbackURL)
 			sessionRequestToken.set(Full(requestToken))
 			S.redirectTo(requestToken.getAuthenticationURL)
 		} catch {
@@ -92,7 +99,6 @@ object TwitterAPI  extends Loggable  {
 	def nullifySingleton = {
 	  	sessionTwitter.remove
 		sessionRequestToken.remove
-		this.twitter = (new TwitterFactory()).getInstance()
 	}
 }
 

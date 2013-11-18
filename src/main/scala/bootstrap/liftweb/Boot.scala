@@ -69,16 +69,6 @@ class Boot {
     JQueryModule.InitParam.JQuery=JQueryModule.JQuery172
     JQueryModule.init()
     
-    //Dispatchers for Twitter Login Actions
-    	def twitterRoutes: LiftRules.DispatchPF = {
-    		case req @ Req("twitter" :: "authenticate" :: Nil, _, GetRequest) =>
-    			() => TwitterAPI.doAuth(req)
-    		case req @ Req("twitter" :: "callback" :: Nil, _, GetRequest) =>
-    			() => TwitterAPI.processAuthCallback(req)
-    		case req @ Req("logout" :: Nil, _, GetRequest) =>
-    			() => TwitterAPI.doLogout(req)
-    	} 
-    
-    LiftRules.dispatch.append(twitterRoutes)
+    LiftRules.dispatch.append(TwitterAPI.twitterRoutes)
   }
 }
